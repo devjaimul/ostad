@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:ostad/constant/constamt.dart';
 import 'package:ostad/global%20widgets/custom_list_tile.dart';
 import 'package:ostad/model/product_model.dart';
 import 'package:ostad/service/api_services.dart';
 import 'package:ostad/views/add_product_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:ostad/views/product.dart';
 
 class ProductList extends StatefulWidget {
   const ProductList({super.key});
@@ -30,27 +32,20 @@ class _ProductListState extends State<ProductList> {
       appBar: AppBar(
         title: const Text('Product List'),
       ),
-      body: Visibility(
-        replacement: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.teal,
+      body: RefreshIndicator(
+        onRefresh: _getProductList, // Refresh product list on swipe
+        child: Visibility(
+          visible: _isprogress==false,
+          replacement: Center(child: CircularProgressIndicator(color: Colors.teal,)),
+          child: ListView.builder(
+            itemCount: productList.length,
+            itemBuilder: (context, index) {
+              return CustomListTile(
+                product: productList[index], onUpdateProduct: () {  },
+              );
+            },
           ),
-        ),
-        visible: !_isprogress, // Using negation here for better readability
-        child: ListView.builder(
-          shrinkWrap: true,
-          primary: false,
-          itemCount: productList.length,
-          itemBuilder: (context, index) {
-            return CustomListTile(
-              productName: productList[index].productName,
-              unitPrice: productList[index].unitPrice.toString(),
-              quantity: productList[index].qty.toString(),
-              totalPrice: productList[index].totalPrice.toString(),
-              image: productList[index].img,
-            );
-          },
-        ),
+        )
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -71,8 +66,8 @@ class _ProductListState extends State<ProductList> {
       _isprogress = true;  // Show progress indicator
     });
 
-    const String baseUrl = "http://152.42.163.176:2008/api/v1/ReadProduct";
-    Uri uri = Uri.parse(baseUrl);
+    const String getProductUrl = baseUrl+"ReadProduct";
+    Uri uri = Uri.parse(getProductUrl);
     Response response = await get(uri);
 
     print(response.statusCode);  // Debugging the API status
@@ -111,24 +106,4 @@ class _ProductListState extends State<ProductList> {
       _isprogress = false;  // Hide progress indicator
     });
   }
-}
-
-class Product {
-  final String id;
-  final String productName;
-  final int productCode;
-  final int unitPrice;
-  final int qty;
-  final int totalPrice;
-  final String img;
-
-  Product({
-    required this.id,
-    required this.productName,
-    required this.productCode,
-    required this.unitPrice,
-    required this.qty,
-    required this.totalPrice,
-    required this.img,
-  });
 }
